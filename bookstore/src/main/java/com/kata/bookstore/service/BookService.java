@@ -15,7 +15,12 @@ public class BookService {
     }
 
     public Book addBook(Book book) {
-        Optional<Book> existingBook = bookRepository.findByTitleAndAuthor(book.getTitle(),book.getAuthor());
-        return existingBook.orElseGet(() -> bookRepository.save(book));
+        return bookRepository.findByTitleAndAuthor(
+                book.getTitle(),
+                book.getAuthor()
+        ).map(existingBook -> {
+            existingBook.setStock(existingBook.getStock() + book.getStock());
+            return bookRepository.save(existingBook);
+        }).orElseGet(() -> bookRepository.save(book));
     }
 }
