@@ -1,4 +1,5 @@
 package com.kata.bookstore.entity;
 
-public class Role {
+public enum Role {
+    Admin,User
 }
