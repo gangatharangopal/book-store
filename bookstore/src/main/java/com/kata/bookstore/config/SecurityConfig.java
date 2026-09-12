@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     /**
-     *  H2 Console is used during development/testing to
+     *  H2 Console used during development/testing to
      *  inspect the in-memory database and verify tables/data. As H2 uses I-frame for
      *  login spring security blocks it.
      *  so allow frames from the same application origin for the H2 Console.
@@ -32,7 +32,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth ->
-                            auth.requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                            auth
+                                .requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                                .requestMatchers(HttpMethod.POST,"/api/books").hasRole("Admin")
+                                .requestMatchers(HttpMethod.PUT,"/api/books").hasRole("Admin")
                                 .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
                 )
