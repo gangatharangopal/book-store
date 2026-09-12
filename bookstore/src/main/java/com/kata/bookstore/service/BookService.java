@@ -37,4 +37,9 @@ public class BookService {
         existingBook.setStock(book.getStock());
         return bookRepository.save(existingBook);
     }
+
+    public Object getBookById(long id) {
+        return bookRepository.findById(id)
+                .orElseThrow(() ->new ResourceNotFoundException("Book not found with id: " + id));
+    }
 }

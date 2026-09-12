@@ -22,6 +22,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @SpringBootTest
@@ -114,6 +115,15 @@ public class BookControllerTest {
                             """))
                 .andExpect(status().isBadRequest());
         verify(bookService, never()).addBook(any(Book.class));
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void shouldReturn404ForNonExistingBook() throws Exception {
+        when(bookService.getBookById(99L)).thenThrow(new ResourceNotFoundException(
+                        "Book not found with id: 99"));
+        mockMvc.perform(get("/api/books/99"))
+                .andExpect(status().isNotFound());
     }
 }
 
