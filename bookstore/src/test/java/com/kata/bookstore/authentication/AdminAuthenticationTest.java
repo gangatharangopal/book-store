@@ -22,4 +22,10 @@ public class AdminAuthenticationTest {
                         .with(httpBasic("admin", "@dm1n")))
                 .andExpect(status().isOk());
     }
+    @Test
+    void adminShouldNotBeAuthenticatedWithInvalidPassword() throws Exception {
+        mockMvc.perform(get("/api/users")
+                        .with(httpBasic("admin", "wrongPassword")))
+                .andExpect(status().isUnauthorized());
+    }
 }
