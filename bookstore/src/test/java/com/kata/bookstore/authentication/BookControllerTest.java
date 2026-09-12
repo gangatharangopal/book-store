@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -95,6 +97,23 @@ public class BookControllerTest {
                             }
                             """))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "Admin")
+    void shouldReturn400ForInvalidBook() throws Exception {
+        mockMvc.perform(post("/api/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "title": "",
+                                "author": "Author Name",
+                                "price": 500.00,
+                                "stock": 10
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+        verify(bookService, never()).addBook(any(Book.class));
     }
 }
 
