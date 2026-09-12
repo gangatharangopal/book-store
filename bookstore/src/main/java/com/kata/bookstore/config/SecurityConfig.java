@@ -29,11 +29,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         //http://localhost:8080/h2-console
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/h2-console/**"))
+                .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth ->
-                        auth.requestMatchers("/h2-console/**").permitAll()
-                            .requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                            auth.requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                                .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());

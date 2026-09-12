@@ -2,6 +2,7 @@ package com.kata.bookstore.controller;
 
 import com.kata.bookstore.dto.RegistrationRequest;
 import com.kata.bookstore.service.CustomerUserService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class UserController {
         return ResponseEntity.ok("Users");
     }
     @PostMapping("/registration")
+    @SecurityRequirements
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegistrationRequest request) {
         customerUserService.registerUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).build();
