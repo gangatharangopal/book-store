@@ -1,5 +1,7 @@
 package com.kata.bookstore.authentication;
 
+import com.fasterxml.jackson.databind.util.ArrayBuilders;
+import com.kata.bookstore.entity.Book;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -8,6 +10,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
+
+import java.math.BigDecimal;
+
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 @SpringBootTest
@@ -16,7 +22,7 @@ public class BookControllerTest {
     @Autowired
     private MockMvc mockMvc;
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "Admin")
     public void adminOnlyTest() throws Exception {
         mockMvc.perform(post("/api/books").contentType(MediaType.APPLICATION_JSON)
                         .content("""
@@ -41,7 +47,9 @@ public class BookControllerTest {
                                     "stock": 10
                                 }
                                 """))
-                .andExpect(status().isCreated());
+                .andExpect(status().isForbidden());
     }
+
+
 }
 

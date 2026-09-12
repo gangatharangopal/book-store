@@ -16,9 +16,6 @@ public class BookService {
 
     public Book addBook(Book book) {
         Optional<Book> existingBook = bookRepository.findByTitleAndAuthor(book.getTitle(),book.getAuthor());
-        if (existingBook.isEmpty()) {
-            return bookRepository.save(book);
-        }
-        return existingBook.get();
+        return existingBook.orElseGet(() -> bookRepository.save(book));
     }
 }

@@ -27,11 +27,8 @@ public class BookServiceTest {
 
     @Test
     public void addNewBook() {
-        Book book = new Book();
-        book.setTitle("Book1");
-        book.setAuthor("Author Name1");
-        book.setPrice(new BigDecimal("500"));
-        book.setStock(10);
+        Book book =  Book.builder().id(1l).title("Book Name").author("Author Name")
+                .price(new BigDecimal("500.00")).stock(5).build();
         when(bookRepository.findByTitleAndAuthor("Book1","Author Name1")).thenReturn(Optional.empty());
         when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
         Book result = bookService.addBook(book);
@@ -42,5 +39,19 @@ public class BookServiceTest {
         assertEquals(new BigDecimal("500"), result.getPrice());
         assertEquals(10, result.getStock());
         verify(bookRepository).save(any(Book.class));
+    }
+    @Test
+    void shouldIncrementStockWhenAdminAddsExistingBook() {
+        Book existingBook = Book.builder().id(1l).title("Book Name").author("Author Name")
+                .price(new BigDecimal("500.00")).stock(10).build();
+        Book newBook = Book.builder().id(1l).title("Book Name").author("Author Name")
+                .price(new BigDecimal("500.00")).stock(5).build();
+        when(bookRepository.findByTitleAndAuthor("Book Name","Author Name"))
+                .thenReturn(Optional.of(existingBook));
+        when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Book result = bookService.addBook(newBook);
+        assertNotNull(result);
+        assertEquals(15, result.getStock());
+        verify(bookRepository).save(existingBook);
     }
 }
