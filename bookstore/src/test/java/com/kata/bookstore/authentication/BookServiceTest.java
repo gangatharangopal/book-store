@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -53,5 +54,21 @@ public class BookServiceTest {
         assertNotNull(result);
         assertEquals(15, result.getStock());
         verify(bookRepository).save(existingBook);
+    }
+    @Test
+    void shouldNotCreateDuplicateBook() {
+        Book existingBook = Book.builder().id(1L).title("Book Name").author("Author Name").price(new BigDecimal("500.00")).stock(10)
+                            .build();
+        Book newBook = Book.builder()
+                .title("Book Name").author("Author Name").price(new BigDecimal("500.00")).stock(5)
+                .build();
+        when(bookRepository.findByTitleAndAuthor("Book Name","Author Name")).thenReturn(Optional.of(existingBook));
+        when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Book result = bookService.addBook(newBook);
+        assertNotNull(result);
+        assertEquals(1L, result.getId());
+        assertEquals(15, result.getStock());
+        verify(bookRepository).save(existingBook);
+        verify(bookRepository, never()).save(newBook);
     }
 }
