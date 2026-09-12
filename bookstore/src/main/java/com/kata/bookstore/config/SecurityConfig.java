@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     /**
-     *  H2 Console is used during development/testing to
+     *  H2 Console used during development/testing to
      *  inspect the in-memory database and verify tables/data. As H2 uses I-frame for
      *  login spring security blocks it.
      *  so allow frames from the same application origin for the H2 Console.
