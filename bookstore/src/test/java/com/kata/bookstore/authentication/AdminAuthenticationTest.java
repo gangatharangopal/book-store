@@ -19,7 +19,7 @@ public class AdminAuthenticationTest {
     @Test
     void adminAuthenticationTest() throws Exception {
         mockMvc.perform(get("/api/users")
-                        .with(httpBasic("admin", "admin")))
+                        .with(httpBasic("admin", "@dm1n")))
                 .andExpect(status().isOk());
     }
 }
