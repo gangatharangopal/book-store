@@ -1,17 +1,23 @@
 package com.kata.bookstore.service;
 
+import com.kata.bookstore.dto.RegistrationRequest;
+import com.kata.bookstore.entity.Role;
 import com.kata.bookstore.entity.User;
+import com.kata.bookstore.exception.DuplicateUsernameException;
 import com.kata.bookstore.repository.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class CustomerUserService implements UserDetailsService {
     private final UserRepository userRepository;
-    public CustomerUserService(UserRepository userRepository) {
+    private final PasswordEncoder passwordEncoder;
+    public CustomerUserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -23,4 +29,15 @@ public class CustomerUserService implements UserDetailsService {
                 .roles(user.getRole().name())
                 .build();
     }
+    public User registerUser(RegistrationRequest request) {
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new DuplicateUsernameException("Username already exists");
+        }
+        User user = new User();
+        user.setUsername(request.getUsername());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.User);
+        return userRepository.save(user);
+    }
+
 }
