@@ -32,7 +32,10 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth ->
-                            auth.requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                            auth
+                                .requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                                .requestMatchers(HttpMethod.POST,"/api/books").hasRole("Admin")
+                                .requestMatchers(HttpMethod.PUT,"/api/books").hasRole("Admin")
                                 .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
                 .anyRequest().authenticated()
                 )
