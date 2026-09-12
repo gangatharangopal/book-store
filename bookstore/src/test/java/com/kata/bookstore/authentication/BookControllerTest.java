@@ -2,6 +2,7 @@ package com.kata.bookstore.authentication;
 
 import com.fasterxml.jackson.databind.util.ArrayBuilders;
 import com.kata.bookstore.entity.Book;
+import com.kata.bookstore.exception.ResourceNotFoundException;
 import com.kata.bookstore.service.BookService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -77,6 +78,23 @@ public class BookControllerTest {
                             }
                             """))
                 .andExpect(status().isOk());
+    }
+    @Test
+    @WithMockUser(username = "admin", roles = "Admin")
+    void shouldReturn404WhenUpdatingNonExistingBook() throws Exception {
+        when(bookService.updateBook(eq(19L), any(Book.class)))
+                .thenThrow(new ResourceNotFoundException("Book not found with id: 19"));
+        mockMvc.perform(put("/api/books/19")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "title": "New Book Name",
+                                "author": "New Author",
+                                "price": 500.00,
+                                "stock": 20
+                            }
+                            """))
+                .andExpect(status().isNotFound());
     }
 }
 
