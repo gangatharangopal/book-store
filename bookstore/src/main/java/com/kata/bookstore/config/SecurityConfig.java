@@ -40,6 +40,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.POST,"/api/books").hasRole("Admin")
                                 .requestMatchers(HttpMethod.PUT,"/api/books").hasRole("Admin")
                                 .requestMatchers(HttpMethod.POST,"/api/cart").hasAnyRole("Admin","User")
+                                .requestMatchers(HttpMethod.PUT,"/api/cart").hasAnyRole("Admin","User")
                                 .requestMatchers(HttpMethod.GET,"/api/cart").hasAnyRole("Admin","User")
                             .anyRequest().authenticated()
                 )

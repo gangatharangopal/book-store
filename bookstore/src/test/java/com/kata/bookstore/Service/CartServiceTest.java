@@ -169,7 +169,13 @@ public class CartServiceTest {
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(cartItem);
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        Cart result = cartService.getUserCart(user);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        Cart result = cartService.getUserCart();
         assertNotNull(result);
         assertEquals(cart, result);
         assertEquals(1, result.getItems().size());
@@ -205,12 +211,17 @@ public class CartServiceTest {
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(cartItem);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Cart result = cartService.removeBookFromCart(user, book.getId());
+        Cart result = cartService.removeBookFromCart(book.getId());
         assertNotNull(result);
         assertTrue(result.getItems().isEmpty());
-
         verify(cartRepository).findByUser(user);
         verify(cartRepository).save(cart);
     }

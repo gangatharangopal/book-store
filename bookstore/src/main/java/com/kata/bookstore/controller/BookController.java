@@ -27,21 +27,36 @@ public class BookController {
         this.bookService = bookService;
     }
 
+    /**
+     * Add a new book.
+     */
     @PostMapping
     public ResponseEntity<Book> addBook(@RequestBody @Valid Book book) {
         Book savedBook = bookService.addBook(book);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedBook);
     }
+
+    /**
+     * Update an existing book.
+     */
     @PutMapping("/{id}")
     public ResponseEntity<Book> updateBook(@PathVariable Long id,@RequestBody @Valid Book book) {
         Book updatedBook = bookService.updateBook(id, book);
         return ResponseEntity.ok(updatedBook);
     }
+
+    /**
+     * Get all books with pagination and sorting.
+     */
     @GetMapping
     public ResponseEntity<Page<Book>> getAllBooks(
             @PageableDefault(size = 10,sort = "title",direction = Sort.Direction.ASC) Pageable pageable) {
         return ResponseEntity.ok(bookService.getAllBooks(pageable));
     }
+
+    /**
+     * Get a book by its ID.
+     */
     @GetMapping("/{id}")
     public ResponseEntity<Book> getBookById(@PathVariable Long id) {
         return ResponseEntity.ok(bookService.getBookById(id));

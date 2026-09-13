@@ -4,6 +4,7 @@ import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
+import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.repository.UserRepository;
@@ -19,12 +20,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.httpBasic;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -70,4 +76,43 @@ public class CartControllerTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    @WithMockUser(username = "user", roles = "User")
+    void shouldReturnUserCart() throws Exception {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
+                .price(new BigDecimal("500.00")).stock(10)
+                .build();
+        CartItem cartItem = CartItem.builder().id(1L).book(book).quantity(2).build();
+        Cart cart = Cart.builder().id(1L)
+                .user(user)
+                .items(new ArrayList<>(List.of(cartItem)))
+                .build();
+        when(cartService.getUserCart()).thenReturn(cart);
+        mockMvc.perform(get("/api/cart"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.user.username").value("user"))
+                .andExpect(jsonPath("$.items[0].book.id").value(1))
+                .andExpect(jsonPath("$.items[0].quantity").value(2));
+
+        verify(cartService).getUserCart();
+    }
+    @Test
+    @WithMockUser(username = "user", roles = "User")
+    void shouldRemoveBookFromCart() throws Exception {
+
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L)
+                .title("Book Name1").author("Author1").price(new BigDecimal("500.00"))
+                .stock(10).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        when(cartService.removeBookFromCart(1L)).thenReturn(cart);
+        mockMvc.perform(delete("/api/cart/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.user.username").value("user"))
+                .andExpect(jsonPath("$.items").isEmpty());
+        verify(cartService).removeBookFromCart(1L);
+    }
 }

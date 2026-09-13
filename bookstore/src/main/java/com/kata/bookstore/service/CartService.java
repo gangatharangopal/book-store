@@ -69,7 +69,11 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public Cart getUserCart(User user) {
+    public Cart getUserCart() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() ->new ResourceNotFoundException("User not found"));
+
         return cartRepository.findByUser(user).orElseGet(() ->
                 Cart.builder().user(user).build());
     }
@@ -91,7 +95,11 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public Cart removeBookFromCart(User user, Long bookId) {
+    public Cart removeBookFromCart(Long bookId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() ->new ResourceNotFoundException("User not found"));
+
         Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + user.getUsername()));
         CartItem cartItem = cart.getItems()
                 .stream().filter(item ->item.getBook().getId().equals(bookId))
@@ -130,5 +138,25 @@ public class CartService {
             cart.getItems().clear();
         }
         return bookOrder;
+    }
+
+    public Cart updateCartItemQuantity(Long bookId, Integer quantity) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() ->
+                        new ResourceNotFoundException("Cart not found"));
+        CartItem cartItem = cart.getItems().stream()
+                .filter(item -> item.getBook().getId().equals(bookId))
+                .findFirst()
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Book not found in cart"));
+        Book book = cartItem.getBook();
+        if (quantity > book.getStock()) {
+            throw new InSufficientStockException("Not enough stock");
+        }
+        cartItem.setQuantity(quantity);
+        return cartRepository.save(cart);
     }
 }

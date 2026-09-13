@@ -27,6 +27,10 @@ public class UserController {
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(customerUserService.getAllUsers());
     }
+
+    /**
+     * Register a new user.
+     */
     @PostMapping("/registration")
     @SecurityRequirements
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegistrationRequest request) {
