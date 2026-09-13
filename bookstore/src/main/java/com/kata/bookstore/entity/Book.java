@@ -37,5 +37,5 @@ public class Book {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
     @Column(nullable = false)
-    private int stock;
+    private Integer stock;
 }

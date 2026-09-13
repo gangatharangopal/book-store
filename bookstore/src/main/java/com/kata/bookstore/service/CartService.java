@@ -7,6 +7,7 @@ import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.OrderItem;
+import com.kata.bookstore.entity.OrderStatus;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.InSufficientStockException;
 import com.kata.bookstore.exception.InvalidQtyCountException;
@@ -19,8 +20,10 @@ import com.kata.bookstore.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -38,6 +41,8 @@ public class CartService {
         this.bookOrderRepository = bookOrderRepository;
         this.bookRepository = bookRepository;
     }
+
+    @Transactional
     public Cart addBookToCart(AddToCartRequest addToCartRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -101,7 +106,8 @@ public class CartService {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
-        BookOrder bookOrder = BookOrder.builder().user(user).build();
+        BookOrder bookOrder = BookOrder.builder().user(user).status(OrderStatus.CONFIRMED)
+                .createdAt(LocalDateTime.now()).build();
         for (CartItem cartItem : cart.getItems()) {
             if (cartItem.getQuantity() > cartItem.getBook().getStock()) {
                 throw new InSufficientStockException("Insufficient stock");

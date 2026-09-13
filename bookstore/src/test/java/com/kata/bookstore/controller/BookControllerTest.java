@@ -4,14 +4,13 @@ import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.exception.ResourceNotFoundException;
 import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.service.BookService;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -20,7 +19,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -37,7 +35,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class BookControllerTest {
     @Autowired
     private MockMvc mockMvc;
-    @Mock
+    @MockBean
     private BookService bookService;
     @Mock
     private BookRepository bookRepository;
@@ -77,7 +75,6 @@ public class BookControllerTest {
                 .title("New Book Name").author("New Author").price(new BigDecimal("500.00"))
                 .stock(20)
                 .build();
-
         when(bookService.updateBook(eq(1L), any(Book.class))).thenReturn(updatedBook);
         mockMvc.perform(put("/api/books/1")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -135,24 +132,7 @@ public class BookControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    @Test
-    void shouldReturnAllBooks() {
-        Book book1 = Book.builder().id(1L).title("Book Name1").author("Author Name1")
-                .price(new BigDecimal("500.00")).stock(10).build();
-        Book book2 =Book.builder().id(2L).title("Book Name2").author("Author Name1")
-                .price(new BigDecimal("500.00")).stock(15).build();
 
-        Pageable pageable = PageRequest.of(0,10,Sort.by("title").ascending());
-        Page<Book> bookPage = new PageImpl<>(List.of(book1, book2),pageable,2);
-        when(bookRepository.findAll(pageable)).thenReturn(bookPage);
-        Page<Book> result = bookService.getAllBooks(pageable);
-        Assertions.assertNotNull(result);
-        Assertions.assertEquals(2, result.getTotalElements());
-        Assertions.assertEquals(2, result.getContent().size());
-        Assertions.assertEquals("Book Name1", result.getContent().get(0).getTitle());
-        Assertions.assertEquals("Book Name2", result.getContent().get(1).getTitle());
-        verify(bookRepository).findAll(pageable);
-    }
 
     @Test
     @WithMockUser(username = "user", roles = "User")

@@ -1,6 +1,7 @@
 package com.kata.bookstore.controller;
 
 import com.kata.bookstore.dto.RegistrationRequest;
+import com.kata.bookstore.entity.User;
 import com.kata.bookstore.service.CustomerUserService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -19,9 +22,10 @@ public class UserController {
     public UserController(CustomerUserService customerUserService) {
         this.customerUserService = customerUserService;
     }
+
     @GetMapping
-    public ResponseEntity<String> getUsers() {
-        return ResponseEntity.ok("Users");
+    public ResponseEntity<List<User>> getAllUsers() {
+        return ResponseEntity.ok(customerUserService.getAllUsers());
     }
     @PostMapping("/registration")
     @SecurityRequirements

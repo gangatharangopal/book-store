@@ -2,6 +2,9 @@ package com.kata.bookstore.controller;
 
 
 import com.kata.bookstore.dto.AddToCartRequest;
+import com.kata.bookstore.dto.CartBookResponse;
+import com.kata.bookstore.dto.CartItemResponse;
+import com.kata.bookstore.dto.CartResponse;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.repository.BookRepository;
@@ -28,12 +31,27 @@ public class CartController {
     }
     @PostMapping("/checkout")
     public ResponseEntity<BookOrder> checkout() {
-        cartService.checkout();
+        BookOrder checkout = cartService.checkout();
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
     @PostMapping
-    public ResponseEntity<?> addBookToCart(@RequestBody AddToCartRequest request) {
+    public ResponseEntity<CartResponse> addBookToCart(@RequestBody AddToCartRequest request) {
         Cart cart = cartService.addBookToCart(request);
-        return ResponseEntity.ok(cart);
+        CartResponse cartResponse = CartResponse.builder()
+                .id(cart.getId())
+                .items(cart.getItems().stream()
+                        .map(item -> CartItemResponse.builder()
+                                .id(item.getId())
+                                .quantity(item.getQuantity())
+                                .book(CartBookResponse.builder()
+                                        .id(item.getBook().getId())
+                                        .title(item.getBook().getTitle())
+                                        .author(item.getBook().getAuthor())
+                                        .price(item.getBook().getPrice())
+                                        .build())
+                                .build())
+                        .toList())
+                .build();
+        return ResponseEntity.ok(cartResponse);
     }
 }

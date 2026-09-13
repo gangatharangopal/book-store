@@ -35,10 +35,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth ->
                             auth
                                 .requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/users").hasRole("Admin")
+                                .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.POST,"/api/books").hasRole("Admin")
                                 .requestMatchers(HttpMethod.PUT,"/api/books").hasRole("Admin")
-                                .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
+                                .requestMatchers(HttpMethod.POST,"/api/cart").hasAnyRole("Admin","User")
+                                .requestMatchers(HttpMethod.GET,"/api/cart").hasAnyRole("Admin","User")
+                            .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
         return http.build();

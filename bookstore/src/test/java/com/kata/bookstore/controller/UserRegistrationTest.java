@@ -26,7 +26,7 @@ public class UserRegistrationTest {
     @Test
     void duplicateUserRegistrationTest() throws Exception {
         String requestBody = """
-            {   "username": "name1","password": "1234" }
+            {   "username": "namex","password": "1234" }
             """;
         mockMvc.perform(post("/api/users/registration").contentType(MediaType.APPLICATION_JSON).content(requestBody))
                 .andExpect(status().isCreated());
