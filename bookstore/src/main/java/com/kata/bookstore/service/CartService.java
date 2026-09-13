@@ -60,4 +60,9 @@ public class CartService {
         cartItem.setQuantity(qty);
         return cartRepository.save(cart);
     }
+
+    public Cart removeBookFromCart(User user, Long bookid) {
+        Cart cart = new Cart();
+        return cart;
+    }
 }

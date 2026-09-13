@@ -139,4 +139,22 @@ class CartServiceTest {
         assertEquals(1, result.getItems().size());
         assertEquals(5, result.getItems().get(0).getQuantity());
     }
+
+    @Test
+    void shouldRemoveBookFromCart() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Book name1").author("Author name")
+                    .price(new BigDecimal("500.00")).stock(5).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.getItems().add(cartItem);
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        Cart result = cartService.removeBookFromCart(user, book.getId());
+        assertNotNull(result);
+        assertTrue(result.getItems().isEmpty());
+
+        verify(cartRepository).findByUser(user);
+        verify(cartRepository).save(cart);
+    }
 }
