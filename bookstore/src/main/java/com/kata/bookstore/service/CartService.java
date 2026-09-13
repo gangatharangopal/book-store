@@ -39,7 +39,7 @@ public class CartService {
     }
 
     public Cart getUserCart(User user) {
-        Cart cart = new Cart();
-        return cart;
+        return cartRepository.findByUser(user).orElseGet(() ->
+                Cart.builder().user(user).build());
     }
 }
