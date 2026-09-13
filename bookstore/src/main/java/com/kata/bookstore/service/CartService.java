@@ -7,6 +7,7 @@ import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.OrderItem;
 import com.kata.bookstore.entity.User;
+import com.kata.bookstore.exception.InSufficientStockException;
 import com.kata.bookstore.exception.InvalidQtyCountException;
 import com.kata.bookstore.exception.QtyNotAvailableException;
 import com.kata.bookstore.exception.ResourceNotFoundException;
@@ -95,6 +96,9 @@ public class CartService {
         Cart cart = cartRepository.findByUser(user).orElseThrow();
         BookOrder bookOrder = BookOrder.builder().user(user).build();
         for (CartItem cartItem : cart.getItems()) {
+            if (cartItem.getQuantity() > cartItem.getBook().getStock()) {
+                throw new InSufficientStockException("Insufficient stock");
+            }
             OrderItem orderItem = OrderItem.builder().order(bookOrder).
                     book(cartItem.getBook())
                     .quantity(cartItem.getQuantity())
@@ -109,6 +113,7 @@ public class CartService {
                         .multiply(BigDecimal.valueOf(item.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
         bookOrder.setTotalAmount(totalAmount);
         bookOrderRepository.save(bookOrder);
+        cart.getItems().clear();
         return bookOrder;
     }
 }
