@@ -14,8 +14,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.Assert.assertThrows;
@@ -160,5 +165,41 @@ public class CartServiceTest {
 
         verify(cartRepository).findByUser(user);
         verify(cartRepository).save(cart);
+    }
+
+    @Test
+    void checkoutShouldGetUserCart() {
+        User user = User.builder().id(1L).username("user").build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new UsernamePasswordAuthenticationToken("user",null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        cartService.checkout();
+        verify(cartRepository).findByUser(user);
+    }
+
+    @Test
+    void getUserCartOnCheckOut() {
+        User user = User.builder().id(1L).username("user").build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.setItems(List.of(cartItem));
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        cartService.checkout();
+        verify(cartRepository).findByUser(user);
+    }
+
+    @Test
+    void checkoutShouldCreateBookOrder() {
+
     }
 }

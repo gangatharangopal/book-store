@@ -9,6 +9,9 @@ import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.QtyNotAvailableException;
 import com.kata.bookstore.exception.ResourceNotFoundException;
 import com.kata.bookstore.repository.CartRepository;
+import com.kata.bookstore.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -17,8 +20,11 @@ import java.util.Optional;
 public class CartService {
 
     private final CartRepository cartRepository;
-    public CartService(CartRepository cartRepository) {
+    private final UserRepository userRepository;
+    public CartService(CartRepository cartRepository,
+                       UserRepository userRepository) {
         this.cartRepository = cartRepository;
+        this.userRepository = userRepository;
     }
     public Cart addBookToCart(User user, Book book, int qty) {
         if (book.getStock() <= 0) {
@@ -74,6 +80,10 @@ public class CartService {
 
     public BookOrder checkout() {
         BookOrder bookOrder = new BookOrder();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        Cart cart = cartRepository.findByUser(user).orElseThrow();
         return bookOrder;
     }
 }
