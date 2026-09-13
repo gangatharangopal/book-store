@@ -1,5 +1,6 @@
 package com.kata.bookstore.authentication;
 
+import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
@@ -54,9 +55,10 @@ public class CartControllerTest {
         User user = User.builder().id(1L).username("user1").build();
         Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
                 .price(new BigDecimal("500.00")).stock(10).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
-        when(cartService.addBookToCart(user, book, 2))
+        when(cartService.addBookToCart(request))
                 .thenReturn(Cart.builder().id(1L).user(user).build());
         mockMvc.perform(post("/api/cart").contentType(MediaType.APPLICATION_JSON)
                         .content("""

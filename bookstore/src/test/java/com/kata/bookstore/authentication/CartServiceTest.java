@@ -1,5 +1,6 @@
 package com.kata.bookstore.authentication;
 
+import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
@@ -56,9 +57,10 @@ public class CartServiceTest {
         Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
                 .price(new BigDecimal("500.00")).stock(10).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Cart result = cartService.addBookToCart(user, book, 2);
+        Cart result = cartService.addBookToCart(request);
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
         CartItem cartItem = result.getItems().get(0);
@@ -72,13 +74,14 @@ public class CartServiceTest {
     @Test
     void increaseQuantityWhenSameBookAddedAgainTest() {
         User user = User.builder().id(1L).username("user").build();
-        Book book = Book.builder().id(1L).title("Clean Code").author("Robert C. Martin").price(new BigDecimal("500.00")).stock(10).build();
+        Book book = Book.builder().id(1L).title("Book name1").author("Author1").price(new BigDecimal("500.00")).stock(10).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(existingItem);
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Cart result = cartService.addBookToCart(user, book, 3);
+        Cart result = cartService.addBookToCart(request);
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
         CartItem cartItem = result.getItems().get(0);
@@ -92,8 +95,9 @@ public class CartServiceTest {
     void validateNotToAddWhenStockZero() {
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00")).stock(0).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
-        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(user, book, 1));
+        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(request));
         assertTrue(cart.getItems().isEmpty());
     }
 
@@ -102,7 +106,8 @@ public class CartServiceTest {
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00")).stock(0).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
-        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(user, book, 1));
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
+        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(request));
         assertTrue(cart.getItems().isEmpty());
     }
 
@@ -113,11 +118,12 @@ public class CartServiceTest {
         Book book = Book.builder().id(1L).title("Book name1").author("Author name")
                     .price(new BigDecimal("500.00")).stock(5).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         // 3 in the card
         CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(3).build();
         cart.getItems().add(existingItem);
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        assertThrows(QtyNotAvailableException.class,() -> cartService.addBookToCart(user, book, 3));
+        assertThrows(QtyNotAvailableException.class,() -> cartService.addBookToCart(request));
         assertEquals(3, cart.getItems().get(0).getQuantity());
     }
 

@@ -1,6 +1,7 @@
 package com.kata.bookstore.service;
 
 
+import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
@@ -37,7 +38,13 @@ public class CartService {
         this.bookOrderRepository = bookOrderRepository;
         this.bookRepository = bookRepository;
     }
-    public Cart addBookToCart(User user, Book book, int qty) {
+    public Cart addBookToCart(AddToCartRequest addToCartRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Book book = bookRepository.findById(addToCartRequest.getBookId())
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
         if (book.getStock() <= 0) {
             throw new IllegalStateException("Book is out of stock: " + book.getTitle());
         }
@@ -46,13 +53,13 @@ public class CartService {
         Optional<CartItem> existingItem = cart.getItems().stream().filter(item -> item.getBook().getId().equals(book.getId())).findFirst();
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + qty;
+            int newQuantity = item.getQuantity() + addToCartRequest.getQuantity();
             if (newQuantity > book.getStock()) {
                 throw new QtyNotAvailableException("Requested quantity exceeds available stock");
             }
-            item.setQuantity(item.getQuantity() + qty);
+            item.setQuantity(item.getQuantity() + addToCartRequest.getQuantity());
         } else {
-            cart.getItems().add(CartItem.builder().cart(cart).book(book).quantity(qty).build());
+            cart.getItems().add(CartItem.builder().cart(cart).book(book).quantity(addToCartRequest.getQuantity()).build());
         }
         return cartRepository.save(cart);
     }
