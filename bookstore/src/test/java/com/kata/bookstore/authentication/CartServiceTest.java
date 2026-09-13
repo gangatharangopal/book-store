@@ -195,7 +195,7 @@ public class CartServiceTest {
         Cart cart = Cart.builder().id(1L).user(user).build();
         Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
-        cart.setItems(List.of(cartItem));
+        cart.setItems(new ArrayList<>(List.of(cartItem)));
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
         securityContext.setAuthentication(authentication);
@@ -212,7 +212,7 @@ public class CartServiceTest {
         Cart cart = Cart.builder().id(1L).user(user).build();
         Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
-        cart.setItems(List.of(cartItem));
+        cart.setItems(new ArrayList<>(List.of(cartItem)));
         SecurityContext securityContext =SecurityContextHolder.createEmptyContext();
         Authentication authentication =new UsernamePasswordAuthenticationToken("user", null);
         securityContext.setAuthentication(authentication);
@@ -229,7 +229,7 @@ public class CartServiceTest {
                 .stock(10).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
-        cart.setItems(List.of(cartItem));
+        cart.setItems(new ArrayList<>(List.of(cartItem)));
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
         securityContext.setAuthentication(authentication);
@@ -252,7 +252,7 @@ public class CartServiceTest {
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();        Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
-        cart.setItems(List.of(cartItem));
+        cart.setItems(new ArrayList<>(List.of(cartItem)));
         SecurityContext securityContext =SecurityContextHolder.createEmptyContext();
         Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
         securityContext.setAuthentication(authentication);
@@ -272,7 +272,7 @@ public class CartServiceTest {
         Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
-        cart.setItems(List.of(cartItem));
+        cart.setItems(new ArrayList<>(List.of(cartItem)));
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
         Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
         securityContext.setAuthentication(authentication);

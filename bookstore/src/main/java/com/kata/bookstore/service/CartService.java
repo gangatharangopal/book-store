@@ -113,7 +113,9 @@ public class CartService {
                         .multiply(BigDecimal.valueOf(item.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
         bookOrder.setTotalAmount(totalAmount);
         bookOrderRepository.save(bookOrder);
-        cart.getItems().clear();
+        if(!cart.getItems().isEmpty()) {
+            cart.getItems().clear();
+        }
         return bookOrder;
     }
 }
