@@ -28,10 +28,11 @@ public class CartControllerTest {
     @Test
     @WithMockUser(username = "user1", roles = "User")
     void shouldCheckoutCartSuccessfully() throws Exception {
-        BookOrder order = new BookOrder();
+        BookOrder order = BookOrder.builder().build();
         when(cartService.checkout()).thenReturn(order);
         mockMvc.perform(post("/api/cart/checkout").with(httpBasic("user1", "1234")))
                 .andExpect(status().isCreated());
         verify(cartService).checkout();
     }
+
 }

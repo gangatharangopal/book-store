@@ -1,16 +1,20 @@
 package com.kata.bookstore.authentication;
 
 import com.kata.bookstore.entity.Book;
+import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
+import com.kata.bookstore.entity.OrderItem;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.QtyNotAvailableException;
+import com.kata.bookstore.repository.BookOrderRepository;
 import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.repository.CartRepository;
 import com.kata.bookstore.repository.UserRepository;
 import com.kata.bookstore.service.CartService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -35,13 +39,14 @@ public class CartServiceTest {
 
     @Mock
     private CartRepository cartRepository;
-
     @InjectMocks
     private CartService cartService;
     @Mock
     private UserRepository userRepository;
     @Mock
     private BookRepository bookRepository;
+    @Mock
+    private BookOrderRepository bookOrderRepository;
     @Test
     void shouldAddBookToCart() {
         User user = User.builder().id(1L).username("user").build();
@@ -168,7 +173,7 @@ public class CartServiceTest {
     }
 
     @Test
-    void checkoutShouldGetUserCart() {
+    void onCheckoutGetUserCartTestor() {
         User user = User.builder().id(1L).username("user").build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
@@ -200,6 +205,42 @@ public class CartServiceTest {
 
     @Test
     void checkoutShouldCreateBookOrder() {
-
+        User user = User.builder().id(1L).username("user").build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.setItems(List.of(cartItem));
+        SecurityContext securityContext =SecurityContextHolder.createEmptyContext();
+        Authentication authentication =new UsernamePasswordAuthenticationToken("user", null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        cartService.checkout();
+        verify(bookOrderRepository).save(any(BookOrder.class));
+    }
+    @Test
+    void onCheckoutCreateOrderItemFromCartItemTest() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500"))
+                .stock(10).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.setItems(List.of(cartItem));
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        cartService.checkout();
+        ArgumentCaptor<BookOrder> orderCaptor = ArgumentCaptor.forClass(BookOrder.class);
+        verify(bookOrderRepository).save(orderCaptor.capture());
+        BookOrder savedOrder = orderCaptor.getValue();
+        assertEquals(1, savedOrder.getItems().size());
+        OrderItem orderItem = savedOrder.getItems().get(0);
+        assertEquals(book, orderItem.getBook());
+        assertEquals(2, orderItem.getQuantity());
+        assertEquals(new BigDecimal("500"), orderItem.getPriceAtPurchase());
     }
 }
