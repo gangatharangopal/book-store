@@ -5,7 +5,9 @@ import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.QtyNotAvailableException;
+import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.repository.CartRepository;
+import com.kata.bookstore.repository.UserRepository;
 import com.kata.bookstore.service.CartService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,16 +25,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-
 @ExtendWith(MockitoExtension.class)
-class CartServiceTest {
+public class CartServiceTest {
 
     @Mock
     private CartRepository cartRepository;
 
     @InjectMocks
     private CartService cartService;
-
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private BookRepository bookRepository;
     @Test
     void shouldAddBookToCart() {
         User user = User.builder().id(1L).username("user").build();

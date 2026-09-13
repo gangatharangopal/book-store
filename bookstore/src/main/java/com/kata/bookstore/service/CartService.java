@@ -2,6 +2,7 @@ package com.kata.bookstore.service;
 
 
 import com.kata.bookstore.entity.Book;
+import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.User;
@@ -69,5 +70,10 @@ public class CartService {
                         new ResourceNotFoundException("Book not found in cart: " + bookId));
         cart.getItems().remove(cartItem);
         return cartRepository.save(cart);
+    }
+
+    public BookOrder checkout() {
+        BookOrder bookOrder = new BookOrder();
+        return bookOrder;
     }
 }
