@@ -120,4 +120,23 @@ class CartServiceTest {
         assertEquals(2, result.getItems().get(0).getQuantity());
         verify(cartRepository).findByUser(user);
     }
+
+    @Test
+    void updateCartItemQtyTest() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00"))
+                    .stock(10).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.getItems().add(cartItem);
+
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+
+        when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Cart result = cartService.updateCartItemQuantity(user, book.getId(), 5);
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+        assertEquals(5, result.getItems().get(0).getQuantity());
+    }
 }

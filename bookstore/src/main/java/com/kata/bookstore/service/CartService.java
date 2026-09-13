@@ -42,4 +42,9 @@ public class CartService {
         return cartRepository.findByUser(user).orElseGet(() ->
                 Cart.builder().user(user).build());
     }
+
+    public Cart updateCartItemQuantity(User user, Long id, int qty) {
+        Cart cart = new Cart();
+        return cart;
+    }
 }
