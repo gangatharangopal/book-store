@@ -61,8 +61,13 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public Cart removeBookFromCart(User user, Long bookid) {
-        Cart cart = new Cart();
-        return cart;
+    public Cart removeBookFromCart(User user, Long bookId) {
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + user.getUsername()));
+        CartItem cartItem = cart.getItems()
+                .stream().filter(item ->item.getBook().getId().equals(bookId))
+                .findFirst().orElseThrow(() ->
+                        new ResourceNotFoundException("Book not found in cart: " + bookId));
+        cart.getItems().remove(cartItem);
+        return cartRepository.save(cart);
     }
 }

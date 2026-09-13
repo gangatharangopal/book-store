@@ -141,7 +141,7 @@ class CartServiceTest {
     }
 
     @Test
-    void shouldRemoveBookFromCart() {
+    void removeBookFromCart() {
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Book name1").author("Author name")
                     .price(new BigDecimal("500.00")).stock(5).build();
