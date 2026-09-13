@@ -1,4 +1,4 @@
-package com.kata.bookstore.authentication;
+package com.kata.bookstore.Service;
 
 import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;

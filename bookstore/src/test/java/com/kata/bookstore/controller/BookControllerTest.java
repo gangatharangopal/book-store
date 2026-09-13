@@ -1,4 +1,4 @@
-package com.kata.bookstore.authentication;
+package com.kata.bookstore.controller;
 
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.exception.ResourceNotFoundException;
