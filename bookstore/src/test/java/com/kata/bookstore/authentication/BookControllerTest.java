@@ -127,7 +127,7 @@ public class BookControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
+    @WithMockUser(username = "admin", roles = "Admin")
     void shouldReturn404ForNonExistingBook() throws Exception {
         when(bookService.getBookById(99L)).thenThrow(new ResourceNotFoundException(
                         "Book not found with id: 99"));

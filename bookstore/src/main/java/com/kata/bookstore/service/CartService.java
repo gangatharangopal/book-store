@@ -2,22 +2,40 @@ package com.kata.bookstore.service;
 
 
 import com.kata.bookstore.entity.Book;
+import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
+import com.kata.bookstore.entity.OrderItem;
 import com.kata.bookstore.entity.User;
+import com.kata.bookstore.exception.InSufficientStockException;
+import com.kata.bookstore.exception.InvalidQtyCountException;
 import com.kata.bookstore.exception.QtyNotAvailableException;
 import com.kata.bookstore.exception.ResourceNotFoundException;
+import com.kata.bookstore.repository.BookOrderRepository;
+import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.repository.CartRepository;
+import com.kata.bookstore.repository.UserRepository;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
 public class CartService {
 
     private final CartRepository cartRepository;
-    public CartService(CartRepository cartRepository) {
+    private final UserRepository userRepository;
+    private final BookOrderRepository bookOrderRepository;
+    private final BookRepository bookRepository;
+    public CartService(CartRepository cartRepository,UserRepository userRepository,
+                       BookOrderRepository bookOrderRepository,
+                       BookRepository bookRepository) {
         this.cartRepository = cartRepository;
+        this.userRepository = userRepository;
+        this.bookOrderRepository = bookOrderRepository;
+        this.bookRepository = bookRepository;
     }
     public Cart addBookToCart(User user, Book book, int qty) {
         if (book.getStock() <= 0) {
@@ -52,10 +70,10 @@ public class CartService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Book not found in cart: " + bookId));
         if (qty <= 0) {
-            throw new IllegalStateException("Quantity must be greater than zero");
+            throw new InvalidQtyCountException("Quantity must be greater than zero");
         }
         if (qty > cartItem.getBook().getStock()) {
-            throw new IllegalStateException("Requested quantity exceeds available stock");
+            throw new QtyNotAvailableException("Requested quantity exceeds available stock");
         }
         cartItem.setQuantity(qty);
         return cartRepository.save(cart);
@@ -69,5 +87,35 @@ public class CartService {
                         new ResourceNotFoundException("Book not found in cart: " + bookId));
         cart.getItems().remove(cartItem);
         return cartRepository.save(cart);
+    }
+
+    public BookOrder checkout() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow();
+        Cart cart = cartRepository.findByUser(user).orElseThrow();
+        BookOrder bookOrder = BookOrder.builder().user(user).build();
+        for (CartItem cartItem : cart.getItems()) {
+            if (cartItem.getQuantity() > cartItem.getBook().getStock()) {
+                throw new InSufficientStockException("Insufficient stock");
+            }
+            OrderItem orderItem = OrderItem.builder().order(bookOrder).
+                    book(cartItem.getBook())
+                    .quantity(cartItem.getQuantity())
+                    .priceAtPurchase(cartItem.getBook().getPrice())
+                    .build();
+            bookOrder.getItems().add(orderItem);
+            int remainingStock = cartItem.getBook().getStock() - cartItem.getQuantity();
+            cartItem.getBook().setStock(remainingStock);
+            bookRepository.save(cartItem.getBook());
+        }
+        BigDecimal totalAmount = cart.getItems().stream().map(item -> item.getBook().getPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        bookOrder.setTotalAmount(totalAmount);
+        bookOrderRepository.save(bookOrder);
+        if(!cart.getItems().isEmpty()) {
+            cart.getItems().clear();
+        }
+        return bookOrder;
     }
 }
