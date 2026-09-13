@@ -5,6 +5,7 @@ import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
+import com.kata.bookstore.entity.OrderItem;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.QtyNotAvailableException;
 import com.kata.bookstore.exception.ResourceNotFoundException;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Optional;
 
 @Service
@@ -86,6 +88,17 @@ public class CartService {
         User user = userRepository.findByUsername(username).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
         BookOrder bookOrder = BookOrder.builder().user(user).build();
+        for (CartItem cartItem : cart.getItems()) {
+            OrderItem orderItem = OrderItem.builder().order(bookOrder).
+                    book(cartItem.getBook())
+                    .quantity(cartItem.getQuantity())
+                    .priceAtPurchase(cartItem.getBook().getPrice())
+                    .build();
+            bookOrder.getItems().add(orderItem);
+        }
+        BigDecimal totalAmount = cart.getItems().stream().map(item -> item.getBook().getPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        bookOrder.setTotalAmount(totalAmount);
         bookOrderRepository.save(bookOrder);
         return bookOrder;
     }

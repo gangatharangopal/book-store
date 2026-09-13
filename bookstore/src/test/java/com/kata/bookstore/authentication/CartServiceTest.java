@@ -243,4 +243,41 @@ public class CartServiceTest {
         assertEquals(2, orderItem.getQuantity());
         assertEquals(new BigDecimal("500"), orderItem.getPriceAtPurchase());
     }
+
+    @Test
+    void checkoutShouldCalculateOrderTotal() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.setItems(List.of(cartItem));
+        SecurityContext securityContext =SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        cartService.checkout();
+        ArgumentCaptor<BookOrder> orderCaptor = ArgumentCaptor.forClass(BookOrder.class);
+        verify(bookOrderRepository).save(orderCaptor.capture());
+        BookOrder savedOrder = orderCaptor.getValue();
+        assertEquals(new BigDecimal("1000"),savedOrder.getTotalAmount());
+    }
+
+    @Test
+    void checkoutShouldReduceBookStock() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(10).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.setItems(List.of(cartItem));
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        cartService.checkout();
+        assertEquals(8, book.getStock());
+        verify(bookRepository).save(book);
+    }
 }

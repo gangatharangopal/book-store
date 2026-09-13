@@ -34,5 +34,6 @@ public class BookOrder {
     private OrderStatus status = OrderStatus.CONFIRMED;
     private Instant createdAt = Instant.now();
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 }
