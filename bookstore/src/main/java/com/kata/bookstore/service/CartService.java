@@ -37,4 +37,9 @@ public class CartService {
         }
         return cartRepository.save(cart);
     }
+
+    public Cart getUserCart(User user) {
+        Cart cart = new Cart();
+        return cart;
+    }
 }

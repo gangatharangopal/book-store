@@ -90,7 +90,7 @@ class CartServiceTest {
     }
 
     @Test
-    void shouldNotAddMoreThanAvailableStock() {
+   public void shouldNotAddMoreThanAvailableStock() {
         User user = User.builder().id(1L).username("user").build();
         // 5 available
         Book book = Book.builder().id(1L).title("Book name1").author("Author name")
@@ -102,5 +102,22 @@ class CartServiceTest {
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         assertThrows(QtyNotAvailableException.class,() -> cartService.addBookToCart(user, book, 3));
         assertEquals(3, cart.getItems().get(0).getQuantity());
+    }
+
+    @Test
+    public void returnUserCartTest(){
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00")).stock(5).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.getItems().add(cartItem);
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        Cart result = cartService.getUserCart(user);
+        assertNotNull(result);
+        assertEquals(cart, result);
+        assertEquals(1, result.getItems().size());
+        assertEquals(book, result.getItems().get(0).getBook());
+        assertEquals(2, result.getItems().get(0).getQuantity());
+        verify(cartRepository).findByUser(user);
     }
 }
