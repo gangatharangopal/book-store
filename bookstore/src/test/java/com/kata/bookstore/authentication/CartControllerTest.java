@@ -1,14 +1,24 @@
 package com.kata.bookstore.authentication;
 
+import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
+import com.kata.bookstore.entity.Cart;
+import com.kata.bookstore.entity.User;
+import com.kata.bookstore.repository.BookRepository;
+import com.kata.bookstore.repository.UserRepository;
 import com.kata.bookstore.service.CartService;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.util.Optional;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -24,7 +34,10 @@ public class CartControllerTest {
     private MockMvc mockMvc;
     @MockBean
     private CartService cartService;
-
+    @Mock
+    private UserRepository userRepository;
+    @Mock
+    private BookRepository bookRepository;
     @Test
     @WithMockUser(username = "user1", roles = "User")
     void shouldCheckoutCartSuccessfully() throws Exception {
@@ -33,6 +46,26 @@ public class CartControllerTest {
         mockMvc.perform(post("/api/cart/checkout").with(httpBasic("user1", "1234")))
                 .andExpect(status().isCreated());
         verify(cartService).checkout();
+    }
+
+    @Test
+    @WithMockUser(username = "user1", roles = "User")
+    void addBookToCartTest() throws Exception {
+        User user = User.builder().id(1L).username("user1").build();
+        Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
+                .price(new BigDecimal("500.00")).stock(10).build();
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        when(cartService.addBookToCart(user, book, 2))
+                .thenReturn(Cart.builder().id(1L).user(user).build());
+        mockMvc.perform(post("/api/cart").contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "bookId": 1,
+                                "quantity": 2
+                            }
+                            """))
+                .andExpect(status().isOk());
     }
 
 }
