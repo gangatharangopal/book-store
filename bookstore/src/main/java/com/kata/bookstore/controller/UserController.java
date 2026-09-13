@@ -3,6 +3,7 @@ package com.kata.bookstore.controller;
 import com.kata.bookstore.dto.RegistrationRequest;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.service.CustomerUserService;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -24,6 +25,10 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(
+            summary = "Get All users",
+            description = "Get All users."
+    )
     public ResponseEntity<List<User>> getAllUsers() {
         return ResponseEntity.ok(customerUserService.getAllUsers());
     }
@@ -31,6 +36,10 @@ public class UserController {
     /**
      * Register a new user.
      */
+    @Operation(
+            summary = "Register a new user.",
+            description = "Register a new user."
+    )
     @PostMapping("/registration")
     @SecurityRequirements
     public ResponseEntity<?> registerUser(@Valid @RequestBody RegistrationRequest request) {

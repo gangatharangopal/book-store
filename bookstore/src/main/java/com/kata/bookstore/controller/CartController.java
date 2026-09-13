@@ -11,6 +11,7 @@ import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.repository.UserRepository;
 import com.kata.bookstore.service.CartService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,10 @@ public class CartController {
     /**
      * Checkout the current user's cart.
      */
+    @Operation(
+            summary = " Checkout the current user's cart.",
+            description = " Checkout the current user's cart."
+    )
     @PostMapping("/checkout")
     public ResponseEntity<BookOrder> checkout() {
         BookOrder checkout = cartService.checkout();
@@ -48,6 +53,10 @@ public class CartController {
     /**
      * Add a book to the current user's cart.
      */
+    @Operation(
+            summary = "Add a book to the current user's cart.",
+            description = "Add a book to the current user's cart."
+    )
     @PostMapping
     public ResponseEntity<CartResponse> addBookToCart(@RequestBody AddToCartRequest request) {
         Cart cart = cartService.addBookToCart(request);
@@ -72,6 +81,10 @@ public class CartController {
     /**
      * Remove a book from the cart.
      */
+    @Operation(
+            summary = "Remove a book from the cart.",
+            description = "Remove a book from the cart."
+    )
     @DeleteMapping("/{bookId}")
     public ResponseEntity<Cart> removeBookFromCart(@PathVariable Long bookId) {
         Cart cart = cartService.removeBookFromCart(bookId);
@@ -81,6 +94,10 @@ public class CartController {
     /**
      * Get the current user's cart.
      */
+    @Operation(
+            summary = "Get the current user's cart.",
+            description = "Get the current user's cart."
+    )
     @GetMapping
     public ResponseEntity<Cart> getUserCart() {
         Cart cart = cartService.getUserCart();
@@ -90,6 +107,10 @@ public class CartController {
     /**
      * Update the quantity of a book in the cart.
      */
+    @Operation(
+            summary = "Update the quantity of a book in the cart.",
+            description = "Update the quantity of a book in the cart."
+    )
     @PutMapping("/{bookId}")
     public ResponseEntity<Cart> updateCartItemQuantity(
             @PathVariable Long bookId,
