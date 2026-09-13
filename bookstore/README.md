@@ -90,6 +90,16 @@ PUT /api/cart/{itemId}
 DELETE /api/cart/{itemId}
 ```
 
+#### Add Book to Cart
+
+```http
+POST /api/cart
+{
+    "bookId": 1,
+    "quantity": 2
+}
+```
+
 ### Checkout
 
 ```http
