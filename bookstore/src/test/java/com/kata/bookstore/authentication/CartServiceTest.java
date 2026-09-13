@@ -31,7 +31,7 @@ class CartServiceTest {
     @Test
     void shouldAddBookToCart() {
         User user = User.builder().id(1L).username("user").build();
-        Book book = Book.builder().id(1L).title("Clean Code").author("Robert C. Martin")
+        Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
                 .price(new BigDecimal("500.00")).stock(10).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
