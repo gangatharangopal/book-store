@@ -18,6 +18,9 @@ public class CartService {
         this.cartRepository = cartRepository;
     }
     public Cart addBookToCart(User user, Book book, int qty) {
+        if (book.getStock() <= 0) {
+            throw new IllegalStateException("Book is out of stock: " + book.getTitle());
+        }
         Cart cart = cartRepository.findByUser(user)
                     .orElseGet(() ->cartRepository.save(Cart.builder().user(user).build()));
         Optional<CartItem> existingItem
