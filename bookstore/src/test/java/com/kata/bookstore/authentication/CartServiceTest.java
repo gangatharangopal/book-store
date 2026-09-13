@@ -1,23 +1,25 @@
 package com.kata.bookstore.authentication;
 
- import com.kata.bookstore.entity.Book;
- import com.kata.bookstore.entity.Cart;
- import com.kata.bookstore.entity.CartItem;
- import com.kata.bookstore.entity.User;
- import com.kata.bookstore.repository.CartRepository;
- import com.kata.bookstore.service.CartService;
- import org.junit.jupiter.api.Test;
+import com.kata.bookstore.entity.Book;
+import com.kata.bookstore.entity.Cart;
+import com.kata.bookstore.entity.CartItem;
+import com.kata.bookstore.entity.User;
+import com.kata.bookstore.repository.CartRepository;
+import com.kata.bookstore.service.CartService;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
- import java.math.BigDecimal;
+import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CartServiceTest {
@@ -43,6 +45,32 @@ class CartServiceTest {
         assertEquals(book, cartItem.getBook());
         assertEquals(2, cartItem.getQuantity());
         assertEquals(cart, cartItem.getCart());
+        verify(cartRepository).findByUser(user);
+        verify(cartRepository).save(cart);
+    }
+
+    @Test
+    void increaseQuantityWhenSameBookAddedAgainTest() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Clean Code").author("Robert C. Martin").price(new BigDecimal("500.00")).stock(10)
+                .build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book)
+                .quantity(2)
+                .build();
+
+        cart.getItems().add(existingItem);
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(any(Cart.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        Cart result = cartService.addBookToCart(user, book, 3);
+        assertNotNull(result);
+        assertEquals(1, result.getItems().size());
+        CartItem cartItem = result.getItems().get(0);
+
+        assertEquals(book, cartItem.getBook());
+        assertEquals(5, cartItem.getQuantity());
+
         verify(cartRepository).findByUser(user);
         verify(cartRepository).save(cart);
     }

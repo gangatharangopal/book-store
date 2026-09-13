@@ -8,6 +8,8 @@ import com.kata.bookstore.entity.User;
 import com.kata.bookstore.repository.CartRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class CartService {
 
@@ -17,10 +19,17 @@ public class CartService {
     }
     public Cart addBookToCart(User user, Book book, int qty) {
         Cart cart = cartRepository.findByUser(user)
-                .orElseGet(() ->cartRepository.save(Cart.builder().user(user).build())
-                );
-        CartItem cartItem = CartItem.builder().cart(cart).book(book).quantity(qty).build();
-        cart.getItems().add(cartItem);
+                    .orElseGet(() ->cartRepository.save(Cart.builder().user(user).build()));
+        Optional<CartItem> existingItem
+                = cart.getItems().stream().filter(item -> item.getBook().getId().equals(book.getId()))
+                .findFirst();
+        if (existingItem.isPresent()) {
+            CartItem cartItem = existingItem.get();
+            cartItem.setQuantity(cartItem.getQuantity() + qty);
+        } else {
+            CartItem cartItem = CartItem.builder().cart(cart).book(book).quantity(qty).build();
+            cart.getItems().add(cartItem);
+        }
         return cartRepository.save(cart);
     }
 }
