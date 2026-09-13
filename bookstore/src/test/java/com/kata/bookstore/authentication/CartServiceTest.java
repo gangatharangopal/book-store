@@ -4,6 +4,7 @@ import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.User;
+import com.kata.bookstore.exception.QtyNotAvailableException;
 import com.kata.bookstore.repository.CartRepository;
 import com.kata.bookstore.service.CartService;
 import org.junit.jupiter.api.Test;
@@ -77,5 +78,29 @@ class CartServiceTest {
         Cart cart = Cart.builder().id(1L).user(user).build();
         assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(user, book, 1));
         assertTrue(cart.getItems().isEmpty());
+    }
+
+    @Test
+    void validateNotToAddWhenStockLess() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00")).stock(0).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(user, book, 1));
+        assertTrue(cart.getItems().isEmpty());
+    }
+
+    @Test
+    void shouldNotAddMoreThanAvailableStock() {
+        User user = User.builder().id(1L).username("user").build();
+        // 5 available
+        Book book = Book.builder().id(1L).title("Book name1").author("Author name")
+                    .price(new BigDecimal("500.00")).stock(5).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        // 3 in the card
+        CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(3).build();
+        cart.getItems().add(existingItem);
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        assertThrows(QtyNotAvailableException.class,() -> cartService.addBookToCart(user, book, 3));
+        assertEquals(3, cart.getItems().get(0).getQuantity());
     }
 }
