@@ -6,6 +6,7 @@ import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.QtyNotAvailableException;
+import com.kata.bookstore.exception.ResourceNotFoundException;
 import com.kata.bookstore.repository.CartRepository;
 import org.springframework.stereotype.Service;
 
@@ -43,8 +44,20 @@ public class CartService {
                 Cart.builder().user(user).build());
     }
 
-    public Cart updateCartItemQuantity(User user, Long id, int qty) {
-        Cart cart = new Cart();
-        return cart;
+    public Cart updateCartItemQuantity(User user, Long bookId, int qty) {
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() ->new ResourceNotFoundException("Cart not found for user: " + user.getUsername()));
+        CartItem cartItem = cart.getItems().stream().filter(item ->
+                        item.getBook().getId().equals(bookId)).findFirst()
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Book not found in cart: " + bookId));
+        if (qty <= 0) {
+            throw new IllegalStateException("Quantity must be greater than zero");
+        }
+        if (qty > cartItem.getBook().getStock()) {
+            throw new IllegalStateException("Requested quantity exceeds available stock");
+        }
+        cartItem.setQuantity(qty);
+        return cartRepository.save(cart);
     }
 }
