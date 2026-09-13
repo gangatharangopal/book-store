@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
@@ -279,5 +280,24 @@ public class CartServiceTest {
         cartService.checkout();
         assertEquals(8, book.getStock());
         verify(bookRepository).save(book);
+    }
+
+    @Test
+    void failCheckoutWhenStockIsInsufficientTest() {
+        User user = User.builder().id(1L).username("user").build();
+        Book book = Book.builder().id(1L).title("Clean Code").price(new BigDecimal("500")).stock(1).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.setItems(List.of(cartItem));
+        SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
+        Authentication authentication = new UsernamePasswordAuthenticationToken("user", null);
+        securityContext.setAuthentication(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        assertThrows(IllegalStateException.class,() -> cartService.checkout());
+        assertEquals(1, book.getStock());
+        verify(bookRepository, never()).save(book);
+        verify(bookOrderRepository, never()).save(any(BookOrder.class));
     }
 }

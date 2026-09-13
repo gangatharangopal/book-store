@@ -7,9 +7,11 @@ import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.OrderItem;
 import com.kata.bookstore.entity.User;
+import com.kata.bookstore.exception.InvalidQtyCountException;
 import com.kata.bookstore.exception.QtyNotAvailableException;
 import com.kata.bookstore.exception.ResourceNotFoundException;
 import com.kata.bookstore.repository.BookOrderRepository;
+import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.repository.CartRepository;
 import com.kata.bookstore.repository.UserRepository;
 import org.springframework.security.core.Authentication;
@@ -25,10 +27,14 @@ public class CartService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final BookOrderRepository bookOrderRepository;
-    public CartService(CartRepository cartRepository,UserRepository userRepository,BookOrderRepository bookOrderRepository) {
+    private final BookRepository bookRepository;
+    public CartService(CartRepository cartRepository,UserRepository userRepository,
+                       BookOrderRepository bookOrderRepository,
+                       BookRepository bookRepository) {
         this.cartRepository = cartRepository;
         this.userRepository = userRepository;
         this.bookOrderRepository = bookOrderRepository;
+        this.bookRepository = bookRepository;
     }
     public Cart addBookToCart(User user, Book book, int qty) {
         if (book.getStock() <= 0) {
@@ -63,10 +69,10 @@ public class CartService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Book not found in cart: " + bookId));
         if (qty <= 0) {
-            throw new IllegalStateException("Quantity must be greater than zero");
+            throw new InvalidQtyCountException("Quantity must be greater than zero");
         }
         if (qty > cartItem.getBook().getStock()) {
-            throw new IllegalStateException("Requested quantity exceeds available stock");
+            throw new QtyNotAvailableException("Requested quantity exceeds available stock");
         }
         cartItem.setQuantity(qty);
         return cartRepository.save(cart);
@@ -95,6 +101,9 @@ public class CartService {
                     .priceAtPurchase(cartItem.getBook().getPrice())
                     .build();
             bookOrder.getItems().add(orderItem);
+            int remainingStock = cartItem.getBook().getStock() - cartItem.getQuantity();
+            cartItem.getBook().setStock(remainingStock);
+            bookRepository.save(cartItem.getBook());
         }
         BigDecimal totalAmount = cart.getItems().stream().map(item -> item.getBook().getPrice()
                         .multiply(BigDecimal.valueOf(item.getQuantity()))).reduce(BigDecimal.ZERO, BigDecimal::add);
