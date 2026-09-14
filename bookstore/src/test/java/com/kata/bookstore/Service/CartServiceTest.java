@@ -237,7 +237,7 @@ public class CartServiceTest {
         SecurityContextHolder.setContext(securityContext);
         when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        cartService.checkout();
+        assertThrows(IllegalStateException.class, () -> cartService.checkout());
         verify(cartRepository).findByUser(user);
     }
 

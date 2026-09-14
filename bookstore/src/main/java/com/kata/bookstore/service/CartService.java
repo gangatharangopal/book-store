@@ -64,6 +64,9 @@ public class CartService {
             }
             item.setQuantity(item.getQuantity() + addToCartRequest.getQuantity());
         } else {
+            if (addToCartRequest.getQuantity() > book.getStock()) {
+                throw new QtyNotAvailableException("Requested quantity exceeds available stock");
+            }
             cart.getItems().add(CartItem.builder().cart(cart).book(book).quantity(addToCartRequest.getQuantity()).build());
         }
         return cartRepository.save(cart);
@@ -95,6 +98,7 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
+    @Transactional
     public Cart removeBookFromCart(Long bookId) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
@@ -109,11 +113,17 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
+    @Transactional
     public BookOrder checkout() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String username = authentication.getName();
-        User user = userRepository.findByUsername(username).orElseThrow();
-        Cart cart = cartRepository.findByUser(user).orElseThrow();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Cart cart = cartRepository.findByUser(user)
+                .orElseThrow(() -> new IllegalStateException("Cart is empty"));
+        if (cart.getItems().isEmpty()) {
+            throw new IllegalStateException("Cart is empty");
+        }
         BookOrder bookOrder = BookOrder.builder().user(user).status(OrderStatus.CONFIRMED)
                 .createdAt(LocalDateTime.now()).build();
         for (CartItem cartItem : cart.getItems()) {
@@ -153,6 +163,9 @@ public class CartService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Book not found in cart"));
         Book book = cartItem.getBook();
+        if (quantity <= 0) {
+            throw new InvalidQtyCountException("Quantity must be greater than zero");
+        }
         if (quantity > book.getStock()) {
             throw new InSufficientStockException("Not enough stock");
         }

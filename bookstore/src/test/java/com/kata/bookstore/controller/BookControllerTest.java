@@ -88,6 +88,23 @@ public class BookControllerTest {
                             """))
                 .andExpect(status().isOk());
     }
+
+    @Test
+    @WithMockUser(username = "user", roles = "User")
+    void userCannotUpdateBook() throws Exception {
+        mockMvc.perform(put("/api/books/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "title": "Updated Book",
+                                "author": "Author",
+                                "price": 500.00,
+                                "stock": 20
+                            }
+                            """))
+                .andExpect(status().isForbidden());
+        verify(bookService, never()).updateBook(any(Long.class), any(Book.class));
+    }
     @Test
     @WithMockUser(username = "admin", roles = "Admin")
     void shouldReturn404WhenUpdatingNonExistingBook() throws Exception {

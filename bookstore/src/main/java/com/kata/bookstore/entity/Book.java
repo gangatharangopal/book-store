@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -36,6 +37,8 @@ public class Book {
     @DecimalMin(value = "0.0", inclusive = false)
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
+    @NotNull
+    @Min(0)
     @Column(nullable = false)
     private Integer stock;
 }
