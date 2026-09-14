@@ -52,6 +52,7 @@ public class CartServiceTest {
     private BookRepository bookRepository;
     @Mock
     private BookOrderRepository bookOrderRepository;
+
     @Test
     void shouldAddBookToCart() {
         User user = User.builder().id(1L).username("user").build();
@@ -370,4 +371,5 @@ public class CartServiceTest {
         cartService.checkout();
         assertTrue(cart.getItems().isEmpty());
     }
+
 }

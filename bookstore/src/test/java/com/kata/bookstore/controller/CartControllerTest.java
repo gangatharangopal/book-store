@@ -30,6 +30,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -62,10 +63,22 @@ public class CartControllerTest {
         Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
                 .price(new BigDecimal("500.00")).stock(10).build();
         AddToCartRequest request = AddToCartRequest.builder().bookId(1L).quantity(2).build();
+        CartItem cartItem = CartItem.builder()
+                .id(10L)
+                .book(book)
+                .quantity(2)
+                .build();
+
+        Cart cart = Cart.builder()
+                .id(100L)
+                .user(user)
+                .items(List.of(cartItem))
+                .build();
+
         when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
         when(cartService.addBookToCart(request))
-                .thenReturn(Cart.builder().id(1L).user(user).build());
+                .thenReturn(cart);
         mockMvc.perform(post("/api/cart").contentType(MediaType.APPLICATION_JSON)
                         .content("""
                             {
@@ -73,7 +86,18 @@ public class CartControllerTest {
                                 "quantity": 2
                             }
                             """))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(100))
+                .andExpect(jsonPath("$.items").isArray())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].id").value(10))
+                .andExpect(jsonPath("$.items[0].quantity").value(2))
+                .andExpect(jsonPath("$.items[0].book.id").value(1))
+                .andExpect(jsonPath("$.items[0].book.title").value("Book Name1"))
+                .andExpect(jsonPath("$.items[0].book.author").value("Author1"))
+                .andExpect(jsonPath("$.items[0].book.price").value(500.00));
+        ;
     }
 
     @Test
@@ -114,5 +138,18 @@ public class CartControllerTest {
                 .andExpect(jsonPath("$.user.username").value("user"))
                 .andExpect(jsonPath("$.items").isEmpty());
         verify(cartService).removeBookFromCart(1L);
+    }
+
+    @Test
+    @WithMockUser(username = "user", roles = "User")
+    void shouldCheckoutCurrentUserCart() throws Exception {
+        BookOrder order = BookOrder.builder().id(1L).build();
+        when(cartService.checkout()).thenReturn(order);
+        mockMvc.perform(post("/api/cart/checkout"))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.id").value(1));
+
+        verify(cartService).checkout();
     }
 }
