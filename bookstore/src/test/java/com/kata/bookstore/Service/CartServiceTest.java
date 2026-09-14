@@ -85,13 +85,18 @@ public class CartServiceTest {
 
     @Test
     void increaseQuantityWhenSameBookAddedAgainTest() {
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user1");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Book name1").author("Author1").price(new BigDecimal("500.00")).stock(10).build();
         AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(existingItem);
-        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -372,4 +377,49 @@ public class CartServiceTest {
         assertTrue(cart.getItems().isEmpty());
     }
 
+    @Test
+    void updateCartItemQuantityTest() {
+
+        User user = User.builder().id(1L).username("user1").build();
+        Book book = Book.builder().id(1L).title("Book")
+                .stock(10).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
+        cart.getItems().add(cartItem);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user1");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(cartRepository.save(cart)).thenReturn(cart);
+        Cart result = cartService.updateCartItemQuantity(1L, 5);
+        assertNotNull(result);
+        assertEquals(5, cartItem.getQuantity());
+        verify(userRepository).findByUsername("user1");
+        verify(cartRepository).findByUser(user);
+        verify(cartRepository).save(cart);
+    }
+    @Test
+    void shouldThrowExceptionWhenQuantityExceedsStock() {
+
+        User user = User.builder().id(1L).username("user1").build();
+        Book book = Book.builder().id(1L).stock(10).build();
+        Cart cart = Cart.builder().id(1L).user(user).build();
+        CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book)
+                .quantity(2).build();
+        cart.getItems().add(cartItem);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user1");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
+        when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        assertThrows(InSufficientStockException.class,
+                () -> cartService.updateCartItemQuantity(1L, 11)
+        );
+        verify(cartRepository, never()).save(any(Cart.class));
+    }
 }
