@@ -58,7 +58,7 @@ public class CartController {
             description = "Add a book to the current user's cart."
     )
     @PostMapping
-    public ResponseEntity<CartResponse> addBookToCart(@RequestBody AddToCartRequest request) {
+    public ResponseEntity<CartResponse> addBookToCart(@Valid @RequestBody AddToCartRequest request) {
         Cart cart = cartService.addBookToCart(request);
         CartResponse cartResponse = CartResponse.builder()
                 .id(cart.getId())

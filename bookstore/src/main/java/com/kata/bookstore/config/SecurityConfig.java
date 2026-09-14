@@ -38,7 +38,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.GET, "/api/users").hasRole("Admin")
                                 .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.POST,"/api/books").hasRole("Admin")
-                                .requestMatchers(HttpMethod.PUT,"/api/books").hasRole("Admin")
+                                .requestMatchers(HttpMethod.PUT,"/api/books/**").hasRole("Admin")
                                 .requestMatchers(HttpMethod.POST,"/api/cart").hasAnyRole("Admin","User")
                                 .requestMatchers(HttpMethod.PUT,"/api/cart").hasAnyRole("Admin","User")
                                 .requestMatchers(HttpMethod.GET,"/api/cart").hasAnyRole("Admin","User")
