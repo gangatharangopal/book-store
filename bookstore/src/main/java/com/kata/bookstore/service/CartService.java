@@ -1,11 +1,13 @@
 package com.kata.bookstore.service;
 
 
+import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
 import com.kata.bookstore.entity.CartItem;
 import com.kata.bookstore.entity.OrderItem;
+import com.kata.bookstore.entity.OrderStatus;
 import com.kata.bookstore.entity.User;
 import com.kata.bookstore.exception.InSufficientStockException;
 import com.kata.bookstore.exception.InvalidQtyCountException;
@@ -18,8 +20,10 @@ import com.kata.bookstore.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -37,7 +41,15 @@ public class CartService {
         this.bookOrderRepository = bookOrderRepository;
         this.bookRepository = bookRepository;
     }
-    public Cart addBookToCart(User user, Book book, int qty) {
+
+    @Transactional
+    public Cart addBookToCart(AddToCartRequest addToCartRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        Book book = bookRepository.findById(addToCartRequest.getBookId())
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found"));
         if (book.getStock() <= 0) {
             throw new IllegalStateException("Book is out of stock: " + book.getTitle());
         }
@@ -46,18 +58,22 @@ public class CartService {
         Optional<CartItem> existingItem = cart.getItems().stream().filter(item -> item.getBook().getId().equals(book.getId())).findFirst();
         if (existingItem.isPresent()) {
             CartItem item = existingItem.get();
-            int newQuantity = item.getQuantity() + qty;
+            int newQuantity = item.getQuantity() + addToCartRequest.getQuantity();
             if (newQuantity > book.getStock()) {
                 throw new QtyNotAvailableException("Requested quantity exceeds available stock");
             }
-            item.setQuantity(item.getQuantity() + qty);
+            item.setQuantity(item.getQuantity() + addToCartRequest.getQuantity());
         } else {
-            cart.getItems().add(CartItem.builder().cart(cart).book(book).quantity(qty).build());
+            cart.getItems().add(CartItem.builder().cart(cart).book(book).quantity(addToCartRequest.getQuantity()).build());
         }
         return cartRepository.save(cart);
     }
 
-    public Cart getUserCart(User user) {
+    public Cart getUserCart() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() ->new ResourceNotFoundException("User not found"));
+
         return cartRepository.findByUser(user).orElseGet(() ->
                 Cart.builder().user(user).build());
     }
@@ -79,7 +95,11 @@ public class CartService {
         return cartRepository.save(cart);
     }
 
-    public Cart removeBookFromCart(User user, Long bookId) {
+    public Cart removeBookFromCart(Long bookId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() ->new ResourceNotFoundException("User not found"));
+
         Cart cart = cartRepository.findByUser(user).orElseThrow(() -> new ResourceNotFoundException("Cart not found for user: " + user.getUsername()));
         CartItem cartItem = cart.getItems()
                 .stream().filter(item ->item.getBook().getId().equals(bookId))
@@ -94,7 +114,8 @@ public class CartService {
         String username = authentication.getName();
         User user = userRepository.findByUsername(username).orElseThrow();
         Cart cart = cartRepository.findByUser(user).orElseThrow();
-        BookOrder bookOrder = BookOrder.builder().user(user).build();
+        BookOrder bookOrder = BookOrder.builder().user(user).status(OrderStatus.CONFIRMED)
+                .createdAt(LocalDateTime.now()).build();
         for (CartItem cartItem : cart.getItems()) {
             if (cartItem.getQuantity() > cartItem.getBook().getStock()) {
                 throw new InSufficientStockException("Insufficient stock");
@@ -117,5 +138,25 @@ public class CartService {
             cart.getItems().clear();
         }
         return bookOrder;
+    }
+
+    public Cart updateCartItemQuantity(Long bookId, Integer quantity) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        User user = userRepository.findByUsername(username).orElseThrow(() ->
+                        new ResourceNotFoundException("User not found"));
+        Cart cart = cartRepository.findByUser(user).orElseThrow(() ->
+                        new ResourceNotFoundException("Cart not found"));
+        CartItem cartItem = cart.getItems().stream()
+                .filter(item -> item.getBook().getId().equals(bookId))
+                .findFirst()
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Book not found in cart"));
+        Book book = cartItem.getBook();
+        if (quantity > book.getStock()) {
+            throw new InSufficientStockException("Not enough stock");
+        }
+        cartItem.setQuantity(quantity);
+        return cartRepository.save(cart);
     }
 }

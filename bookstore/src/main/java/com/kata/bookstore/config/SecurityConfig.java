@@ -6,6 +6,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,15 +30,19 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         //http://localhost:8080/h2-console
         http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
                 .authorizeHttpRequests(auth ->
                             auth
                                 .requestMatchers(HttpMethod.POST,"/api/users/registration").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/users").hasRole("Admin")
+                                .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
                                 .requestMatchers(HttpMethod.POST,"/api/books").hasRole("Admin")
                                 .requestMatchers(HttpMethod.PUT,"/api/books").hasRole("Admin")
-                                .requestMatchers("/h2-console/**","/swagger-ui/**","/swagger-ui.html","/v3/api-docs/**").permitAll()
-                .anyRequest().authenticated()
+                                .requestMatchers(HttpMethod.POST,"/api/cart").hasAnyRole("Admin","User")
+                                .requestMatchers(HttpMethod.PUT,"/api/cart").hasAnyRole("Admin","User")
+                                .requestMatchers(HttpMethod.GET,"/api/cart").hasAnyRole("Admin","User")
+                            .anyRequest().authenticated()
                 )
                 .httpBasic(Customizer.withDefaults());
         return http.build();

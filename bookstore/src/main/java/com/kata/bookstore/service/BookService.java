@@ -7,8 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
 public class BookService {
     private final BookRepository bookRepository;
@@ -40,7 +38,7 @@ public class BookService {
         return bookRepository.save(existingBook);
     }
 
-    public Object getBookById(long id) {
+    public Book getBookById(long id) {
         return bookRepository.findById(id)
                 .orElseThrow(() ->new ResourceNotFoundException("Book not found with id: " + id));
     }

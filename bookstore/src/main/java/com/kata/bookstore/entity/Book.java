@@ -9,8 +9,10 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -18,6 +20,8 @@ import java.math.BigDecimal;
 @Table(name = "books")
 @Data
 @Builder
+@AllArgsConstructor
+@NoArgsConstructor
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -33,5 +37,5 @@ public class Book {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal price;
     @Column(nullable = false)
-    private int stock;
+    private Integer stock;
 }

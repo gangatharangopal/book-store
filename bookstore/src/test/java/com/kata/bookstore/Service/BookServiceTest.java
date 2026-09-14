@@ -1,23 +1,30 @@
-package com.kata.bookstore.authentication;
+package com.kata.bookstore.Service;
 
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.repository.BookRepository;
 import com.kata.bookstore.service.BookService;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @ExtendWith(MockitoExtension.class)
 public class BookServiceTest {
@@ -29,15 +36,15 @@ public class BookServiceTest {
     @Test
     public void addNewBook() {
         Book book =  Book.builder().id(1l).title("Book Name").author("Author Name")
-                .price(new BigDecimal("500.00")).stock(5).build();
-        when(bookRepository.findByTitleAndAuthor("Book1","Author Name1")).thenReturn(Optional.empty());
+                .price(new BigDecimal("500.00")).stock(10).build();
+        when(bookRepository.findByTitleAndAuthor("Book Name","Author Name")).thenReturn(Optional.empty());
         when(bookRepository.save(any(Book.class))).thenAnswer(invocation -> invocation.getArgument(0));
         Book result = bookService.addBook(book);
         // assert
         assertNotNull(result);
-        assertEquals("Book1", result.getTitle());
-        assertEquals("Author Name1", result.getAuthor());
-        assertEquals(new BigDecimal("500"), result.getPrice());
+        assertEquals("Book Name", result.getTitle());
+        assertEquals("Author Name", result.getAuthor());
+        assertEquals(new BigDecimal("500.00"), result.getPrice());
         assertEquals(10, result.getStock());
         verify(bookRepository).save(any(Book.class));
     }
@@ -70,5 +77,23 @@ public class BookServiceTest {
         assertEquals(15, result.getStock());
         verify(bookRepository).save(existingBook);
         verify(bookRepository, never()).save(newBook);
+    }
+
+    @Test
+    void shouldReturnAllBooks() {
+        Book book1 = Book.builder().id(1L).title("Book Name1").author("Author Name1")
+                .price(new BigDecimal("500.00")).stock(10).build();
+        Book book2 =Book.builder().id(2L).title("Book Name2").author("Author Name1")
+                .price(new BigDecimal("500.00")).stock(15).build();
+        Pageable pageable = PageRequest.of(0,10, Sort.by("title").ascending());
+        Page<Book> bookPage = new PageImpl<>(List.of(book1, book2),pageable,2);
+        when(bookRepository.findAll(pageable)).thenReturn(bookPage);
+        Page<Book> result = bookService.getAllBooks(pageable);
+        Assertions.assertNotNull(result);
+        Assertions.assertEquals(2, result.getTotalElements());
+        Assertions.assertEquals(2, result.getContent().size());
+        Assertions.assertEquals("Book Name1", result.getContent().get(0).getTitle());
+        Assertions.assertEquals("Book Name2", result.getContent().get(1).getTitle());
+        verify(bookRepository).findAll(pageable);
     }
 }

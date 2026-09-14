@@ -1,5 +1,6 @@
-package com.kata.bookstore.authentication;
+package com.kata.bookstore.Service;
 
+import com.kata.bookstore.dto.AddToCartRequest;
 import com.kata.bookstore.entity.Book;
 import com.kata.bookstore.entity.BookOrder;
 import com.kata.bookstore.entity.Cart;
@@ -34,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,9 +58,20 @@ public class CartServiceTest {
         Book book = Book.builder().id(1L).title("Book Name1").author("Author1")
                 .price(new BigDecimal("500.00")).stock(10).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Cart result = cartService.addBookToCart(user, book, 2);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+
+        SecurityContextHolder.setContext(securityContext);
+
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        Cart result = cartService.addBookToCart(request);
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
         CartItem cartItem = result.getItems().get(0);
@@ -72,18 +85,21 @@ public class CartServiceTest {
     @Test
     void increaseQuantityWhenSameBookAddedAgainTest() {
         User user = User.builder().id(1L).username("user").build();
-        Book book = Book.builder().id(1L).title("Clean Code").author("Robert C. Martin").price(new BigDecimal("500.00")).stock(10).build();
+        Book book = Book.builder().id(1L).title("Book name1").author("Author1").price(new BigDecimal("500.00")).stock(10).build();
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(existingItem);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Cart result = cartService.addBookToCart(user, book, 3);
+        Cart result = cartService.addBookToCart(request);
         assertNotNull(result);
         assertEquals(1, result.getItems().size());
         CartItem cartItem = result.getItems().get(0);
         assertEquals(book, cartItem.getBook());
-        assertEquals(5, cartItem.getQuantity());
+        assertEquals(4, cartItem.getQuantity());
         verify(cartRepository).findByUser(user);
         verify(cartRepository).save(cart);
     }
@@ -92,8 +108,16 @@ public class CartServiceTest {
     void validateNotToAddWhenStockZero() {
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00")).stock(0).build();
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
-        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(user, book, 1));
+        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(request));
         assertTrue(cart.getItems().isEmpty());
     }
 
@@ -102,22 +126,38 @@ public class CartServiceTest {
         User user = User.builder().id(1L).username("user").build();
         Book book = Book.builder().id(1L).title("Book name1").author("Author name").price(new BigDecimal("500.00")).stock(0).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
-        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(user, book, 1));
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(2).build();
+        assertThrows(IllegalStateException.class,() -> cartService.addBookToCart(request));
         assertTrue(cart.getItems().isEmpty());
     }
 
     @Test
    public void shouldNotAddMoreThanAvailableStock() {
-        User user = User.builder().id(1L).username("user").build();
+        User user = User.builder().id(1L).username("user1").build();
         // 5 available
         Book book = Book.builder().id(1L).title("Book name1").author("Author name")
-                    .price(new BigDecimal("500.00")).stock(5).build();
+                    .price(new BigDecimal("500.00")).stock(2).build();
         Cart cart = Cart.builder().id(1L).user(user).build();
-        // 3 in the card
+        AddToCartRequest request = AddToCartRequest.builder().bookId(1l).quantity(3).build();
+        // 3 in the cart
         CartItem existingItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(3).build();
         cart.getItems().add(existingItem);
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        assertThrows(QtyNotAvailableException.class,() -> cartService.addBookToCart(user, book, 3));
+        when(userRepository.findByUsername("user1")).thenReturn(Optional.of(user));
+        when(bookRepository.findById(1L)).thenReturn(Optional.of(book));
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user1");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        assertThrows(QtyNotAvailableException.class,() -> cartService.addBookToCart(request));
         assertEquals(3, cart.getItems().get(0).getQuantity());
     }
 
@@ -129,7 +169,13 @@ public class CartServiceTest {
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(cartItem);
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
-        Cart result = cartService.getUserCart(user);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
+        Cart result = cartService.getUserCart();
         assertNotNull(result);
         assertEquals(cart, result);
         assertEquals(1, result.getItems().size());
@@ -165,12 +211,17 @@ public class CartServiceTest {
         Cart cart = Cart.builder().id(1L).user(user).build();
         CartItem cartItem = CartItem.builder().id(1L).cart(cart).book(book).quantity(2).build();
         cart.getItems().add(cartItem);
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getName()).thenReturn("user");
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+        when(userRepository.findByUsername("user")).thenReturn(Optional.of(user));
         when(cartRepository.findByUser(user)).thenReturn(Optional.of(cart));
         when(cartRepository.save(any(Cart.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        Cart result = cartService.removeBookFromCart(user, book.getId());
+        Cart result = cartService.removeBookFromCart(book.getId());
         assertNotNull(result);
         assertTrue(result.getItems().isEmpty());
-
         verify(cartRepository).findByUser(user);
         verify(cartRepository).save(cart);
     }
